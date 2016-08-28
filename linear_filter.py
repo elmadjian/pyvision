@@ -12,19 +12,11 @@ class LinearFilter():
         img = self.gray_img.copy()
         img = np.pad(img, bound, 'constant', constant_values=0)
         self.filtered_img = img.copy()
-        den = kernel*kernel
-        self.show_img()
         for i in range(bound, img.shape[0]-bound):
             for j in range(bound, img.shape[1]-bound):
-                self.filtered_img[i][j] = round(self._average_conv(img, i, j, bound)/den)
+                square = img[i-bound:i+bound, j-bound:j+bound]
+                self.filtered_img[i][j] = round(square.mean())
         return self.filtered_img
-
-    def _average_conv(self, img, i, j, bound):
-        sum = 0
-        for m in range(i-bound, i+bound):
-            for n in range(j-bound, j+bound):
-                sum += img[m][n]
-        return sum
 
     def show_img(self):
         cv2.imshow("testing", self.filtered_img)
@@ -34,5 +26,5 @@ class LinearFilter():
 
 if __name__ == "__main__":
     g = LinearFilter()
-    g.average_filter(5)
+    g.average_filter(3)
     g.show_img()
