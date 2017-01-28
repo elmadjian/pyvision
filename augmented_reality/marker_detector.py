@@ -6,13 +6,14 @@ class MarkerDetector():
     def __init__(self, calibration=None):
         self.calibration = calibration
 
-    def detect(self, img):
+    def detect(self, img, code):
+        code = np.array(code).reshape((3,3)).astype("bool")
         preprocessed_img = self._preprocess(img)
         contour_list     = self._find_contours(preprocessed_img)
         possible_markers = self._find_candidates(contour_list, img)
         transformed_ones = self._transform_marker(possible_markers, img)
-        
-        return preprocessed_img
+        self._get_marker_code(transformed_ones, code, img)
+        return img
 
     def _preprocess(self, img):
         filtered_img = cv2.medianBlur(img, 5)
@@ -80,10 +81,41 @@ class MarkerDetector():
             ], dtype="float32")
             M = cv2.getPerspectiveTransform(new_m, dst)
             warped = cv2.warpPerspective(img, M, (side, side))
-            markers.append(warped)
+            warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
+            thresh = cv2.threshold(warped, 0, 255, cv2.THRESH_OTSU)[1]
+            markers.append([thresh, m])
         return markers
-            # cv2.imshow("teste", warped)
-            # cv2.waitKey(0)
+
+
+    def _get_marker_code(self, markers, code, img):
+        for m in markers:
+            marker, contour = m[0], m[1]
+            side = marker.shape[0]
+            step = side//5
+            bit_matrix = np.zeros((5,5), dtype="bool")
+            for y in range(5):
+                for x in range(5):
+                    ys, xs = y*step, x*step
+                    cut = marker[ys:ys+step, xs:xs+step]
+                    cut[cut==255] = 1
+                    if cut.sum() > (cut.shape[0]*cut.shape[1]) * 0.45:
+                        bit_matrix[y,x] = True
+            if self._check_code(code, bit_matrix):
+                cv2.drawContours(img, [contour], 0, (255,0,255), 2)
+
+
+    def _check_code(self, code, matrix):
+        if matrix[0,:].any() or matrix[-1,:].any():
+            return False
+        if matrix[:,0].any() or matrix[:,-1].any():
+            return False
+        cut = matrix[1:-1, 1:-1]
+        for i in range(4):
+            if (cut == code).all():
+                return True
+            cut = np.rot90(cut)
+        return False
+
 
                 # temp = np.zeros(img.shape, dtype="uint8")
                 # cv2.drawContours(temp, [approx], 0, (255,255,255), 2)
