@@ -100,21 +100,22 @@ class MarkerDetector():
                     cut[cut==255] = 1
                     if cut.sum() > (cut.shape[0]*cut.shape[1]) * 0.45:
                         bit_matrix[y,x] = True
-            if self._check_code(code, bit_matrix):
-                cv2.drawContours(img, [contour], 0, (255,0,255), 2)
+            ret, rot = self._check_code(code, bit_matrix)
+            if ret:
+                cv2.polylines(img, [contour], True, (255,0,255), 2)
 
 
     def _check_code(self, code, matrix):
         if matrix[0,:].any() or matrix[-1,:].any():
-            return False
+            return False, -1
         if matrix[:,0].any() or matrix[:,-1].any():
-            return False
+            return False, -1
         cut = matrix[1:-1, 1:-1]
         for i in range(4):
             if (cut == code).all():
-                return True
+                return True, i
             cut = np.rot90(cut)
-        return False
+        return False, -1
 
 
                 # temp = np.zeros(img.shape, dtype="uint8")
