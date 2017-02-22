@@ -8,8 +8,9 @@ class CameraCalibration():
         self.img_points = []
         self.objp = np.zeros((7*9,3), dtype="float32")
         self.objp[:,:2] = np.mgrid[0:9, 0:7].T.reshape(-1,2)
-        self.C = None
-        self.dist = None
+        with np.load("cameraspecs.npz") as X:
+            self.C    = X['mtx']
+            self.dist = X['dist']
 
 
     def _get_corners(self):

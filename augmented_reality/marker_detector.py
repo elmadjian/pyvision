@@ -5,6 +5,7 @@ class MarkerDetector():
 
     def __init__(self, calibration=None):
         self.calibration = calibration
+        self.gray = None
 
     def detect(self, img, code):
         code = np.array(code).reshape((3,3)).astype("bool")
@@ -12,13 +13,15 @@ class MarkerDetector():
         contour_list     = self._find_contours(preprocessed_img)
         possible_markers = self._find_candidates(contour_list, img)
         transformed_ones = self._transform_marker(possible_markers, img)
-        self._get_marker_code(transformed_ones, code, img)
-        return img
+        ret, corners     = self._get_marker_code(transformed_ones, code, img)
+        if ret:
+            return self._get_vectors(corners)
+        return [], []
 
     def _preprocess(self, img):
         filtered_img = cv2.medianBlur(img, 5)
-        gray_img = cv2.cvtColor(filtered_img, cv2.COLOR_BGR2GRAY)
-        return cv2.adaptiveThreshold(gray_img, 255,
+        self.gray    = cv2.cvtColor(filtered_img, cv2.COLOR_BGR2GRAY)
+        return cv2.adaptiveThreshold(self.gray, 255,
                                       cv2.ADAPTIVE_THRESH_MEAN_C,
                                       cv2.THRESH_BINARY, 9, 9)
 
@@ -63,7 +66,7 @@ class MarkerDetector():
 
 
     def _transform_marker(self, candidates, img):
-        markers = []
+        transformed = []
         for m in candidates:
             (m0, m1, m2, m3) = m
             m0, m1, m2, m3 = m0[0], m1[0], m2[0], m3[0]
@@ -83,26 +86,28 @@ class MarkerDetector():
             warped = cv2.warpPerspective(img, M, (side, side))
             warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
             thresh = cv2.threshold(warped, 0, 255, cv2.THRESH_OTSU)[1]
-            markers.append([thresh, m])
-        return markers
+            transformed.append([thresh, m])
+        return transformed
 
 
     def _get_marker_code(self, markers, code, img):
         for m in markers:
-            marker, contour = m[0], m[1]
-            side = marker.shape[0]
+            transformed, contour = m[0], m[1]
+            side = transformed.shape[0]
             step = side//5
             bit_matrix = np.zeros((5,5), dtype="bool")
             for y in range(5):
                 for x in range(5):
                     ys, xs = y*step, x*step
-                    cut = marker[ys:ys+step, xs:xs+step]
+                    cut = transformed[ys:ys+step, xs:xs+step]
                     cut[cut==255] = 1
                     if cut.sum() > (cut.shape[0]*cut.shape[1]) * 0.45:
                         bit_matrix[y,x] = True
             ret, rot = self._check_code(code, bit_matrix)
             if ret:
                 cv2.polylines(img, [contour], True, (255,0,255), 2)
+                return True, contour
+        return False, []
 
 
     def _check_code(self, code, matrix):
@@ -116,6 +121,22 @@ class MarkerDetector():
                 return True, i
             cut = np.rot90(cut)
         return False, -1
+
+
+    def _get_vectors(self, corners):
+        crit = self.calibration.criteria
+        C    = self.calibration.C
+        dist = self.calibration.dist
+        imgp = np.array(corners, dtype="float32")
+        objp = np.array([[0., 0., 0.],
+                         [1., 0., 0.],
+                         [1., 1., 0.],
+                         [0., 1., 0.]], dtype="float32")
+        ncorn = cv2.cornerSubPix(self.gray, imgp, (11,11), (-1,-1), crit)
+        ret, rvcs, tvcs, inliers = cv2.solvePnPRansac(objp, ncorn, C, dist)
+        return rvcs, tvcs
+
+
 
 
                 # temp = np.zeros(img.shape, dtype="uint8")
