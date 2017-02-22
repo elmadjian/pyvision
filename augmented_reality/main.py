@@ -1,4 +1,4 @@
-import cv2, marker_detector, sys, camera_calibration
+import cv2, marker_detector, sys, camera_calibration, renderer
 
 def main():
     code = [0,1,0,0,0,1,1,1,1]
@@ -9,12 +9,17 @@ def main():
     # img = md.detect(img, code)
     # cv2.imshow("teste", img)
     # cv2.waitKey(0)
+    rd = renderer.Renderer()
+    rd.start()
     while True:
         frame = video.read()[1]
         rvecs, tvecs = md.detect(frame, code)
-        print(rvecs, tvecs)
-        cv2.imshow("teste", frame)
-        cv2.waitKey(10)
+        rd.image = frame
+        rd.rvecs = rvecs
+        rd.tvecs = tvecs
+        # print(rvecs, tvecs)
+        # cv2.imshow("teste", frame)
+        # cv2.waitKey(10)
 
 
 if __name__=="__main__":

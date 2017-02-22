@@ -16,7 +16,7 @@ class MarkerDetector():
         ret, corners     = self._get_marker_code(transformed_ones, code, img)
         if ret:
             return self._get_vectors(corners)
-        return [], []
+        return None, None
 
     def _preprocess(self, img):
         filtered_img = cv2.medianBlur(img, 5)

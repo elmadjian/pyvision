@@ -3,17 +3,20 @@ from OpenGL.GL import *
 
 class OBJ:
     def __init__(self, filename, swapyz=False):
-        """Loads a Wavefront OBJ file. """
         self.vertices = []
         self.normals = []
         self.texcoords = []
         self.faces = []
+        self.mtl = []
+        self.gl_list = None
+        self._parse_file(filename, swapyz)
+        self._add_to_gl_list()
 
 
-    def _parse_file(self, filename, swapyz=False):
+    def _parse_file(self, filename, swapyz):
         material = None
         for line in open(filename, "r"):
-            if line.startwith("#"):
+            if line.startswith("#"):
                 continue
             values = line.split()
             if not values:
@@ -23,7 +26,7 @@ class OBJ:
             elif values[0] == 'vn':
                 self._get_normals(values, swapyz)
             elif values[0] == 'vt':
-                self.texcoords.append(map(float, values[1:3]))
+                self.texcoords.append(list(map(float, values[1:3])))
             elif values[0] in ('usemtl', 'usemat'):
                 material = values[1]
             elif values[0] == 'mtlib':
@@ -34,6 +37,7 @@ class OBJ:
 
     def _get_vertices(self, values, swapyz):
         v = map(float, values[1:4])
+        v = list(v)
         if swapyz:
             v = v[0], v[2], v[1]
         self.vertices.append(v)
@@ -41,12 +45,13 @@ class OBJ:
 
     def _get_normals(self, values, swapyz):
         v = map(float, values[1:4])
+        v = list(v)
         if swapyz:
             v = v[0], v[2], v[1]
         self.normals.append(v)
 
 
-    def _get_faces(values, material):
+    def _get_faces(self, values, material):
         face = []
         texcoords = []
         norms = []
@@ -61,10 +66,10 @@ class OBJ:
                 norms.append(int(w[2]))
             else:
                 norms.append(0)
-        self.faces.append((faces, norms, texcoords, material))
+        self.faces.append((face, norms, texcoords, material))
 
 
-    def _add_to_gl_list(self, something):
+    def _add_to_gl_list(self):
         self.gl_list = glGenLists(1)
         glNewList(self.gl_list, GL_COMPILE)
         glFrontFace(GL_CCW)
@@ -88,7 +93,7 @@ class OBJ:
         glEndList()
 
 
-    def MTL(filename):
+    def MTL(self, filename):
         contents = {}
         mtl = None
         for line in open(filename, "r"):
@@ -98,7 +103,7 @@ class OBJ:
             if values[0] == 'newmtl':
                 mtl = contents[values[1]] = {}
             elif mtl is None:
-                raise ValueError, "mtl file doesn't start with newmtl stmt"
+                raise ValueError("mtl file doesn't start with newmtl stmt")
             elif values[0] == 'map_Kd':
                 # load the texture referred to by this declaration
                 mtl[values[0]] = values[1]
@@ -114,5 +119,5 @@ class OBJ:
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ix, iy, 0, GL_RGBA,
                     GL_UNSIGNED_BYTE, image)
             else:
-                mtl[values[0]] = map(float, values[1:])
+                mtl[values[0]] = list(map(float, values[1:]))
         return contents
