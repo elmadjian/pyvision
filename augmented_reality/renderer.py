@@ -49,14 +49,10 @@ class Renderer():
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
             glTexImage2D(GL_TEXTURE_2D, 0, 3, ix, iy, 0, GL_RGBA, GL_UNSIGNED_BYTE, bg_image)
             glBindTexture(GL_TEXTURE_2D, self.texture_background)
-            glPushMatrix()
-            glTranslatef(0.0,0.0,-10.0)
             self._draw_background()
-            glPopMatrix()
             if self.rvecs is not None:
-                print("desenhando objeto!")
                 self._draw_object(self.rvecs, self.tvecs)
-
+            glutSwapBuffers()
 
 
     def _draw_object(self, rvecs, tvecs):
@@ -78,13 +74,15 @@ class Renderer():
 
 
     def _draw_background(self):
+        glPushMatrix()
+        glTranslatef(0.0,0.0,-10.0)
         glBegin(GL_QUADS)
         glTexCoord2f(0.0, 1.0); glVertex3f(-4.0, -3.0, 0.0)
         glTexCoord2f(1.0, 1.0); glVertex3f( 4.0, -3.0, 0.0)
         glTexCoord2f(1.0, 0.0); glVertex3f( 4.0,  3.0, 0.0)
         glTexCoord2f(0.0, 0.0); glVertex3f(-4.0,  3.0, 0.0)
         glEnd()
-
+        glPopMatrix()
 
 
     def loop(self):
