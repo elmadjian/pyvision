@@ -106,7 +106,6 @@ class MarkerDetector():
             ret, rot = self._check_code(code, bit_matrix)
             if ret:
                 contour = np.roll(contour, -(rot*2))
-                print("rot:", rot, "contour:", contour)
                 cv2.polylines(img, [contour], True, (255,0,255), 2)
                 return True, contour
         return False, []
