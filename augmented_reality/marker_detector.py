@@ -129,10 +129,10 @@ class MarkerDetector():
         C    = self.calibration.C
         dist = self.calibration.dist
         imgp = np.array(corners, dtype="float32")
-        objp = np.array([[0., 0., 0.],
-                         [1., 0., 0.],
-                         [1., 1., 0.],
-                         [0., 1., 0.]], dtype="float32")
+        objp = np.array([[-0.5, -0.5, 0.0],
+                         [ 0.5, -0.5, 0.0],
+                         [ 0.5,  0.5, 0.0],
+                         [-0.5,  0.5, 0.0]], dtype="float32")
         ncorn = cv2.cornerSubPix(self.gray, imgp, (11,11), (-1,-1), crit)
         ret, rvcs, tvcs, inliers = cv2.solvePnPRansac(objp, ncorn, C, dist)
         return rvcs, tvcs

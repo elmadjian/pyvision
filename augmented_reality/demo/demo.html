@@ -77,7 +77,7 @@
                 var height = 480;
 
                 var scene    = new THREE.Scene();
-                var camera   = new THREE.PerspectiveCamera(45, width/height, 0.1, 1000);
+                var camera   = new THREE.PerspectiveCamera(35, width/height, 0.1, 1000);
                 var renderer = new THREE.WebGLRenderer({antialias:true, alpha:true}); 
 
                 camera.position.set(0,0,0);
@@ -98,14 +98,14 @@
                 var mtlloader = new THREE.MTLLoader();
                 mtlloader.setPath('./bb8/');
                 mtlloader.load('bb8_unit.mtl', function(materials) {
-                    //materials.preload();
+                    materials.preload();
                     var objloader = new THREE.OBJLoader();
                     objloader.setPath('./bb8/');
                     objloader.setMaterials(materials);
                     objloader.load('bb8_unit.obj', function(object) {
                         model = object;
-                        object.rotation.y -= 1.0;
-                        object.updateMatrix();
+                        //object.rotation.y -= 1.0;
+                        //object.updateMatrix();
                         scene.add(object)
                         animate();
                     });
