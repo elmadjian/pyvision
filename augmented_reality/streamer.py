@@ -4,21 +4,23 @@ import scipy.misc
 
 class Streamer(threading.Thread):
 
-    def __init__(self, address="127.0.0.1", port=5000):
+    def __init__(self, address="127.0.0.1", port_img=5000, port_txt=5001):
         threading.Thread.__init__(self)
         context = zmq.Context()
-        self.socket = context.socket(zmq.PUB)
-        self.socket.bind("tcp://"+address+":"+str(port))
+        self.socket_img = context.socket(zmq.PUB)
+        self.socket_txt = context.socket(zmq.PUB)
+        self.socket_img.bind("tcp://"+address+":"+str(port_img))
+        self.socket_txt.bind("tcp://"+address+":"+str(port_txt))
 
-    def send_string(self, msg):
-        self.socket.send_string(msg)
 
-    def send_object(self, obj):
-        self.socket.send_json(obj)
+    def send_matrix(self, detected, matrix):
+        message = {"type": "mat", "det": detected, "obj": matrix}
+        self.socket_txt.send_json(message)
+
 
     def send_image(self, img):
         image = img.tobytes()
-        self.socket.send(image)
+        self.socket_img.send(image)
 
 
 

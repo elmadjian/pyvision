@@ -28,7 +28,7 @@ class Renderer():
         glShadeModel(GL_SMOOTH)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        gluPerspective(33.7, 1.3, 0.1, 100.0)
+        gluPerspective(37.5, 1.3, 0.1, 1000.0)
         glMatrixMode(GL_MODELVIEW)
         self.object = OBJ("carro.obj")
         glEnable(GL_TEXTURE_2D)
@@ -40,10 +40,14 @@ class Renderer():
         glLoadIdentity()
         if self.image is not None:
             bg_image = cv2.flip(self.image, 0)
+            #ix = bg_image.shape[0]
+            #iy = bg_image.shape[1]
+            #bg_image = cv2.imencode(".jpg", bg_image)[1]
             bg_image = Image.fromarray(bg_image)
             ix = bg_image.size[0]
             iy = bg_image.size[1]
             bg_image = bg_image.tobytes("raw", "BGRX", 0, -1)
+            bg_image.tobytes()
             glBindTexture(GL_TEXTURE_2D, self.texture_background)
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
@@ -56,19 +60,19 @@ class Renderer():
 
 
     def _draw_object(self, rvecs, tvecs):
-        rmtx, jac = cv2.Rodrigues(rvecs)
-        vmtx = np.array([[rmtx[0][0],rmtx[0][1],rmtx[0][2],tvecs[0]],
-                         [rmtx[1][0],rmtx[1][1],rmtx[1][2],tvecs[1]],
-                         [rmtx[2][0],rmtx[2][1],rmtx[2][2],tvecs[2]],
+        rmtx = cv2.Rodrigues(rvecs)[0]
+        vmtx = np.array([[rmtx[0][0],rmtx[0][1],rmtx[0][2],tvecs[0][0]],
+                         [rmtx[1][0],rmtx[1][1],rmtx[1][2],tvecs[1][0]],
+                         [rmtx[2][0],rmtx[2][1],rmtx[2][2],tvecs[2][0]],
                          [0.0       ,0.0       ,0.0       ,1.0    ]])
         inverse_mtx = np.array([[ 1.0, 1.0, 1.0, 1.0],
                                 [-1.0,-1.0,-1.0,-1.0],
                                 [-1.0,-1.0,-1.0,-1.0],
                                 [ 1.0, 1.0, 1.0, 1.0]])
         vmtx = vmtx * inverse_mtx
-        vmtx = np.transpose(vmtx)
+        nmtx = np.transpose(vmtx)
         glPushMatrix()
-        glLoadMatrixd(vmtx)
+        glLoadMatrixd(nmtx)
         glCallList(self.object.gl_list)
         glPopMatrix()
 

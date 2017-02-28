@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <title>WS demo</title>
+        <style>
+            /*
+            body {
+            overflow:hidden;
+            }
+            */
+
+            #videostream {
+                width:1280px;
+                height:720px;
+                border: #333 5px solid;
+                background-color: #ccc;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+                background-size: 1300px 740px;
+
+
+            }
+        </style>
+        <script src="three.min.js"></script>
+        <script src="OBJLoader.js"></script>
+        <script src="MTLLoader.js"></script>
+    </head>
+
+    <body>
+        <div id="videostream">
+            <script>
+                var img    = document.getElementById("videostream");
+                var ws_img = new WebSocket("ws://127.0.0.1:9900");
+                var ws_txt = new WebSocket("ws://127.0.0.1:9901");
+                var reader = new FileReader();
+
+                ws_img.onopen = function() {
+                    ws_img.send("client_img connected");
+                };
+                ws_img.onmessage = function(evt) {
+                    reader.onload = function(e) {
+                        if (e.target.readyState == 2)
+                            img.style.backgroundImage = 'url(' + e.target.result + ')';
+                    };
+                    reader.readAsDataURL(evt.data);
+                };
+                ws_txt.onopen = function() {
+                    ws_txt.send("client_txt connected");
+                }
+                ws_txt.onmessage = function(evt) {
+                    var msg = JSON.parse(evt.data);
+                    var m = msg.obj;
+                    if (msg.det == "yes" && model != undefined) {
+                        var matrix = new THREE.Matrix4();
+                        matrix.set(
+                            m[11], m[12], m[13], m[14],
+                            m[21], m[22], m[23], m[24],
+                            m[31], m[32], m[33], m[34],
+                            m[41], m[42], m[43], m[44]
+                        );
+                        model.setRotationFromMatrix(matrix);
+                        model.position.x = m[14];
+                        model.position.y = m[24];
+                        model.position.z = m[34];
+                        model.visible = true;
+                    }
+                    else if (msg.det == "no") {
+                        model.visible = false;
+                    }
+                        
+                }
+
+                //////////////////////////////
+                var width  = 1280;
+                var height = 720;
+
+                var scene    = new THREE.Scene();
+                var camera   = new THREE.PerspectiveCamera(45, width/height, 0.1, 1000);
+                var renderer = new THREE.WebGLRenderer({antialias:true, alpha:true}); 
+
+                camera.position.set(0,0,10);
+                renderer.setSize(width, height);
+                renderer.shadowMap.enabled = true;
+                img.appendChild(renderer.domElement);
+
+                //model
+                var model;
+                var mtlloader = new THREE.MTLLoader();
+                mtlloader.load('bb8.mtl', function(materials) {
+                    materials.preload();
+                    var objloader = new THREE.OBJLoader();
+                    objloader.setMaterials(materials);
+                    objloader.load('bb8.obj', function(object) {
+                        model = object;
+                        scene.add(object)
+                        animate();
+                    });
+                });
+
+                //lights config
+                var ambient = new THREE.AmbientLight(0xdddddd);
+                var light = new THREE.SpotLight(0xffffff, 1.3);
+                light.position.set(5,10,10);
+                light.castShadow = true;
+                scene.add(ambient);
+                scene.add(light);
+
+                //////////////////////////////////////
+                function animate() {
+                    requestAnimationFrame(animate);
+                    //model.rotation.y += 0.03;
+                    renderer.render(scene, camera);
+                }
+
+            </script>
+        </div>
+    </body>
+
+</html>
