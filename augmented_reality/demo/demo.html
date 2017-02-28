@@ -11,18 +11,19 @@
             */
 
             #videostream {
-                width:1280px;
-                height:720px;
+                width:640px;
+                height:480px;
                 border: #333 5px solid;
                 background-color: #ccc;
                 background-repeat: no-repeat;
                 background-attachment: fixed;
-                background-size: 1300px 740px;
+                background-size: 650px 490px;
 
 
             }
         </style>
         <script src="three.min.js"></script>
+        <script src="ColladaLoader2.js"></script>
         <script src="OBJLoader.js"></script>
         <script src="MTLLoader.js"></script>
     </head>
@@ -68,31 +69,43 @@
                     else if (msg.det == "no") {
                         model.visible = false;
                     }
-                        
+
                 }
 
                 //////////////////////////////
-                var width  = 1280;
-                var height = 720;
+                var width  = 640;
+                var height = 480;
 
                 var scene    = new THREE.Scene();
                 var camera   = new THREE.PerspectiveCamera(45, width/height, 0.1, 1000);
                 var renderer = new THREE.WebGLRenderer({antialias:true, alpha:true}); 
 
-                camera.position.set(0,0,10);
+                camera.position.set(0,0,0);
                 renderer.setSize(width, height);
                 renderer.shadowMap.enabled = true;
                 img.appendChild(renderer.domElement);
 
                 //model
                 var model;
+                //                var colladaLoader = new THREE.ColladaLoader();
+                //                colladaLoader.load(
+                //                    'bb8.dae',
+                //                    function(collada) {
+                //                        model = collada.scene;
+                //                        scene.add(collada.scene);
+                //                    }
+                //                );
                 var mtlloader = new THREE.MTLLoader();
-                mtlloader.load('bb8.mtl', function(materials) {
-                    materials.preload();
+                mtlloader.setPath('./bb8/');
+                mtlloader.load('bb8_unit.mtl', function(materials) {
+                    //materials.preload();
                     var objloader = new THREE.OBJLoader();
+                    objloader.setPath('./bb8/');
                     objloader.setMaterials(materials);
-                    objloader.load('bb8.obj', function(object) {
+                    objloader.load('bb8_unit.obj', function(object) {
                         model = object;
+                        object.rotation.y -= 1.0;
+                        object.updateMatrix();
                         scene.add(object)
                         animate();
                     });

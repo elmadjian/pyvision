@@ -13,7 +13,7 @@ def main():
     code = [0,1,0,0,0,1,1,1,1]
     calibration = camera_calibration.CameraCalibration()
     md = marker_detector.MarkerDetector(calibration)
-    video = cv2.VideoCapture(0)
+    video = cv2.VideoCapture(1)
     pusher = streamer.Streamer()
     # img = cv2.imread(sys.argv[1])
     # img = md.detect(img, code)
@@ -60,9 +60,16 @@ def create_transf_matrix_obj(rvecs, tvecs):
     nmtx = vmtx * inverse_mtx
     if not already_found:
         initial_matrix = nmtx.copy()
+        print("initial_z:", nmtx[2,3])
         already_found = True
 
-    nmtx[2,3] = nmtx[2,3] - initial_matrix[2,3]
+    # nmtx[2,3] -= initial_matrix[2,3]
+    # nmtx[1,3] -= initial_matrix[1,3]
+    # nmtx[0,3] -= initial_matrix[0,3]
+    #print(nmtx[2,3])
+    # nmtx[2,3] += 0.0 #z
+    # nmtx[1,3] += 0.0 #y
+    # nmtx[0,3] -= 0.0 #x
     matrix4 = {}
     matrix4[11] = nmtx[0][0]
     matrix4[12] = nmtx[0][1]
