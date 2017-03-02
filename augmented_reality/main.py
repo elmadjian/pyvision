@@ -14,7 +14,7 @@ def main():
     code = [0,1,0,0,0,1,1,1,1]
     calibration = camera_calibration.CameraCalibration()
     #md = marker_detector.MarkerDetector(calibration)
-    nft = nft_detector.NftDetector(12000)
+    nft = nft_detector.NftDetector(1000)
     nft.set_marker(cv2.imread("stones.jpg"))
     nft.show_key_points()
     video = cv2.VideoCapture(1)
@@ -24,8 +24,8 @@ def main():
     # #rd.start()
     # counter = 0 #Kalman filter McGyver
     while True:
-        frame = video.read()[1]
-        nft.detect(frame)
+       frame = video.read()[1]
+       nft.detect(frame)
     #     rvecs, tvecs = md.detect(frame, code)
     #     img = cv2.imencode(".jpg", frame)[1]
     #     pusher.send_image(img)
