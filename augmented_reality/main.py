@@ -14,32 +14,32 @@ def main():
     code = [0,1,0,0,0,1,1,1,1]
     calibration = camera_calibration.CameraCalibration()
     #md = marker_detector.MarkerDetector(calibration)
-    nft = nft_detector.NftDetector(1000)
+    nft = nft_detector.NftDetector(1000, calibration)
     nft.set_marker(cv2.imread("stones.jpg"))
-    nft.show_key_points()
+    #nft.show_key_points()
     video = cv2.VideoCapture(1)
-    # pusher = streamer.Streamer()
+    pusher = streamer.Streamer()
 
     # #rd = renderer.Renderer()
     # #rd.start()
-    # counter = 0 #Kalman filter McGyver
+    counter = 0 #Kalman filter McGyver
     while True:
-       frame = video.read()[1]
-       nft.detect(frame)
+        frame = video.read()[1]
+        rvecs, tvecs = nft.detect(frame)
     #     rvecs, tvecs = md.detect(frame, code)
-    #     img = cv2.imencode(".jpg", frame)[1]
-    #     pusher.send_image(img)
+        img = cv2.imencode(".jpg", frame)[1]
+        pusher.send_image(img)
     #     #rd.image = frame
     #
-    #     if rvecs is not None:
-    #         matrix4 = create_transf_matrix_obj(rvecs, tvecs)
-    #         pusher.send_matrix("yes", matrix4)
-    #         counter = 12
-    #     else:
-    #         counter -= 1
-    #         if counter < 0:
-    #             counter = 0
-    #             pusher.send_matrix("no", [])
+        if rvecs is not None:
+            matrix4 = create_transf_matrix_obj(rvecs, tvecs)
+            pusher.send_matrix("yes", matrix4)
+            counter = 12
+        else:
+            counter -= 1
+            if counter < 0:
+                counter = 0
+                pusher.send_matrix("no", [])
     #
     #         #rd.rvecs = rvecs
     #         #rd.tvecs = tvecs

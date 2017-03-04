@@ -136,11 +136,3 @@ class MarkerDetector():
         ncorn = cv2.cornerSubPix(self.gray, imgp, (11,11), (-1,-1), crit)
         ret, rvcs, tvcs, inliers = cv2.solvePnPRansac(objp, ncorn, C, dist)
         return rvcs, tvcs
-
-
-
-
-                # temp = np.zeros(img.shape, dtype="uint8")
-                # cv2.drawContours(temp, [approx], 0, (255,255,255), 2)
-                # cv2.imshow("teste", temp)
-                # cv2.waitKey(0)
