@@ -16,12 +16,11 @@ class NftDetector():
 
 
     def set_marker(self, img):
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        self.marker_img = img
+        self.marker_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         self.orb = cv2.ORB_create(nfeatures=self.nfeatures)
         self.key_points, self.descriptor = self.orb.detectAndCompute(img, None)
         print("NFT: found " + str(len(self.key_points)) + " key points")
-        h,w = img.shape
+        h,w = self.marker_img.shape
         max_size = max(h,w)
         uh, uw = h/max_size, w/max_size
         self.pts2d = np.float32([[0,0], [w,0], [w,h], [0,h]]).reshape(-1,1,2)
@@ -43,9 +42,9 @@ class NftDetector():
         kp, des = self.orb.detectAndCompute(gray, None)
         matches = self._get_matches(des)
         if matches is not None:
-            corners = self._find_transform(matches, gray, kp)
+            corners = self._find_transform(matches, img, kp)
             if corners is not None:
-                return self._estimate_pose(corners)
+                return self._estimate_pose(corners, gray)
         return None, None
 
 
@@ -74,7 +73,8 @@ class NftDetector():
         M, matchesMask = self._find_homography(matches, kp)
         if M is not None:
             shape = (self.marker_img.shape[1], self.marker_img.shape[0])
-            warped_img = cv2.warpPerspective(img, M, shape, flags=cv2.WARP_INVERSE_MAP)
+            gray  = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            warped_img = cv2.warpPerspective(gray, M, shape, flags=cv2.WARP_INVERSE_MAP)
             kp2, des2 = self.orb.detectAndCompute(warped_img, None)
             refined_matches = self._get_matches(des2)
             if refined_matches is not None:
@@ -82,14 +82,14 @@ class NftDetector():
                 if M2 is not None:
                     homography = np.dot(M, M2)
                     dst = cv2.perspectiveTransform(self.pts2d, homography)
-                    tmp = cv2.polylines(self.marker_img, [np.int32(dst)], True, 255, 3, cv2.LINE_AA)
+                    cv2.polylines(img, [np.int32(dst)], True, 255, 3, cv2.LINE_AA)
                     return np.float32(dst)
 
 
-    def _estimate_pose(self, corners):
+    def _estimate_pose(self, corners, img):
         crit = self.calibration.criteria
         C    = self.calibration.C
         dist = self.calibration.dist
-        ncorn = cv2.cornerSubPix(self.marker_img, corners, (11,11), (-1,-1), crit)
+        ncorn = cv2.cornerSubPix(img, corners, (11,11), (-1,-1), crit)
         ret, rvcs, tvcs, inliers = cv2.solvePnPRansac(self.pts3d, ncorn, C, dist)
         return rvcs, tvcs
